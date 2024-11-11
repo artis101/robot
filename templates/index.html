@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Line Follower Monitor</title>
+    <style>
+      :root {
+        --neon-green: #00ff9f;
+        --dark-bg: #0a0a0a;
+        --panel-bg: #141414;
+        --text-primary: #e0e0e0;
+        --highlight: #00ff9f40;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background-color: var(--dark-bg);
+        color: var(--text-primary);
+        font-family: ui-monospace, "Cascadia Code", "Source Code Pro", Menlo,
+          Consolas, "DejaVu Sans Mono", monospace;
+        padding: 1rem;
+        min-height: 100vh;
+      }
+
+      .header {
+        border-bottom: 1px solid var(--neon-green);
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .header h1 {
+        color: var(--neon-green);
+        font-size: 1.5rem;
+        font-weight: normal;
+      }
+
+      .header pre {
+        color: var(--neon-green);
+        opacity: 0.7;
+      }
+
+      .container {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 1rem;
+      }
+
+      .views {
+        display: flex;
+        gap: 1rem;
+        background: var(--panel-bg);
+        padding: 1rem;
+        border: 1px solid var(--neon-green);
+      }
+
+      .view {
+        flex: 1;
+      }
+
+      .view-title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        color: var(--neon-green);
+      }
+
+      .camera-feed {
+        width: 100%;
+        height: auto;
+        border: 1px solid #333;
+      }
+
+      .metrics {
+        background: var(--panel-bg);
+        padding: 1rem;
+        border: 1px solid var(--neon-green);
+      }
+
+      .metrics h2 {
+        color: var(--neon-green);
+        font-size: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      .metrics pre {
+        background: var(--dark-bg);
+        padding: 1rem;
+        border: 1px solid #333;
+        font-size: 0.875rem;
+      }
+
+      .controls {
+        margin-top: 1rem;
+        background: var(--panel-bg);
+        padding: 1rem;
+        border: 1px solid var(--neon-green);
+      }
+
+      .mode-status {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      .mode-btn {
+        background: transparent;
+        color: var(--neon-green);
+        border: 1px solid var(--neon-green);
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        font-family: inherit;
+        transition: all 0.3s;
+      }
+
+      .mode-btn:hover {
+        background: var(--highlight);
+      }
+
+      .status-panel {
+        background: var(--dark-bg);
+        padding: 1rem;
+        border: 1px solid #333;
+        margin-bottom: 1rem;
+      }
+
+      .status-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+      }
+
+      .status-label {
+        color: #666;
+      }
+
+      .status-value {
+        color: var(--neon-green);
+      }
+
+      .instructions {
+        background: var(--dark-bg);
+        padding: 1rem;
+        border: 1px solid #333;
+        font-size: 0.875rem;
+      }
+
+      .button-icon {
+        color: var(--neon-green);
+        font-size: 0.875rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>LINE FOLLOWER MONITOR</h1>
+      <pre>
+.-.-. --- -. - .-. --- .-.. / ... -.-- ... - . -- / --- -. .-.. .. -. .
+        </pre
+      >
+    </div>
+
+    <div class="container">
+      <div class="views">
+        <div class="view">
+          <div class="view-title">
+            <span>[</span>
+            <span>MAIN FEED</span>
+            <span>]</span>
+          </div>
+          <img
+            src="/frame"
+            id="frame"
+            class="camera-feed"
+            alt="Main camera feed"
+          />
+        </div>
+        <div class="view">
+          <div class="view-title">
+            <span>[</span>
+            <span>THRESHOLD</span>
+            <span>]</span>
+          </div>
+          <img
+            src="/threshold"
+            id="threshold"
+            class="camera-feed"
+            alt="Threshold view"
+          />
+        </div>
+      </div>
+
+      <div class="metrics">
+        <h2>┌── METRICS ──┐</h2>
+        <div id="metrics"></div>
+      </div>
+
+      <div class="controls">
+        <div class="mode-status">
+          <button id="modeButton" class="mode-btn" onclick="toggleMode()">
+            ⚡ MODE: AUTO
+          </button>
+        </div>
+
+        <div class="status-panel">
+          <div class="status-item">
+            <span class="status-label">CONTROL MODE:</span>
+            <span class="status-value" id="controlMode">AUTO</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">DIRECTION:</span>
+            <span class="status-value" id="direction">FORWARD</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">CONTROLLER:</span>
+            <span class="status-value" id="gamepadStatus">DISCONNECTED</span>
+          </div>
+        </div>
+
+        <div class="instructions">
+          <pre>
+╔═══ XBOX CONTROLLER ═══╗
+║ [LT] Left track speed ║
+║ [RT] Right track      ║
+║ [Y]  Forward mode     ║
+║ [A]  Reverse mode     ║
+╚═══════════════════════╝</pre
+          >
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let gamepad = null;
+      let controlMode = "auto";
+      let isGamepadConnected = false;
+      let isForward = true; // Track direction state
+
+      function updateMetrics() {
+        fetch("/metrics")
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById("metrics").innerHTML =
+              `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+          });
+      }
+
+      function toggleMode() {
+        controlMode = controlMode === "auto" ? "manual" : "auto";
+        const button = document.getElementById("modeButton");
+        button.textContent = `⚡ MODE: ${controlMode.toUpperCase()}`;
+        document.getElementById("controlMode").textContent =
+          controlMode.toUpperCase();
+
+        if (controlMode === "auto") {
+          sendControlUpdate(0, 0);
+        }
+      }
+
+      function updateGamepadStatus() {
+        const gamepads = navigator.getGamepads();
+        for (let gp of gamepads) {
+          if (gp) {
+            gamepad = gp;
+            isGamepadConnected = true;
+            break;
+          }
+        }
+
+        const statusEl = document.getElementById("gamepadStatus");
+        const directionEl = document.getElementById("direction");
+
+        if (isGamepadConnected) {
+          statusEl.textContent = "CONNECTED";
+          statusEl.style.color = "var(--neon-green)";
+          directionEl.textContent = isForward ? "FORWARD" : "REVERSE";
+        } else {
+          statusEl.textContent = "DISCONNECTED";
+          statusEl.style.color = "#ff3e3e";
+          directionEl.textContent = "N/A";
+        }
+      }
+
+      function mapTriggerToSpeed(triggerValue) {
+        // Convert trigger value (-1 to 1) to speed (0 to 100)
+        // -1.00 = 0 speed, 1.00 = 100 speed
+        return Math.round(((triggerValue + 1) / 2) * 100);
+      }
+
+      function processGamepad() {
+        if (!isGamepadConnected || controlMode === "auto") return;
+
+        gamepad = navigator.getGamepads()[gamepad.index];
+
+        // Check direction buttons
+        if (gamepad.buttons[2].pressed) {
+          // Y button - Forward
+          isForward = true;
+          updateGamepadStatus(); // Update direction display
+        }
+        if (gamepad.buttons[0].pressed) {
+          // A button - Reverse
+          isForward = false;
+          updateGamepadStatus(); // Update direction display
+        }
+
+        // Get base speeds from triggers
+        let leftSpeed = mapTriggerToSpeed(gamepad.axes[4]);
+        let rightSpeed = mapTriggerToSpeed(gamepad.axes[5]);
+
+        // Invert speeds if in reverse
+        if (!isForward) {
+          leftSpeed = -leftSpeed;
+          rightSpeed = -rightSpeed;
+        }
+
+        sendControlUpdate(leftSpeed, rightSpeed);
+      }
+
+      function sendControlUpdate(leftSpeed, rightSpeed) {
+        fetch("/control", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            mode: controlMode,
+            left_speed: leftSpeed,
+            right_speed: rightSpeed,
+          }),
+        });
+      }
+
+      window.addEventListener("gamepadconnected", (e) => {
+        gamepad = e.gamepad;
+        isGamepadConnected = true;
+        updateGamepadStatus();
+      });
+
+      window.addEventListener("gamepaddisconnected", (e) => {
+        isGamepadConnected = false;
+        updateGamepadStatus();
+        if (controlMode === "manual") {
+          sendControlUpdate(0, 0);
+        }
+      });
+
+      setInterval(() => {
+        updateGamepadStatus();
+        processGamepad();
+      }, 50);
+
+      setInterval(() => {
+        document.getElementById("frame").src = "/frame?" + new Date().getTime();
+        document.getElementById("threshold").src =
+          "/threshold?" + new Date().getTime();
+        updateMetrics();
+      }, 1000);
+    </script>
+  </body>
+</html>
